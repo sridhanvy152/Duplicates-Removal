@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cloud Fuze AI Migration Advisor</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(120deg, #a5d6a7, #c8e6c9, #e8f5e9);
+      background-size: 400% 400%;
+      animation: bgShift 12s ease infinite;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 20px;
+      min-height: 100vh;
+    }
+
+    @keyframes bgShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    h2 {
+      color: #2e7d32;
+      margin-bottom: 20px;
+      font-size: 2rem;
+      text-shadow: 1px 1px #c8e6c9;
+      text-align: center;
+    }
+
+    .advisor-container, .support-container {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      padding: 30px;
+      width: 90%;
+      max-width: 700px;
+      margin-bottom: 40px;
+    }
+
+    .advisor-container textarea {
+      width: 100%;
+      padding: 14px;
+      margin: 12px 0;
+      font-size: 1rem;
+      border: 1px solid #a5d6a7;
+      border-radius: 10px;
+      resize: vertical;
+    }
+
+    .advisor-container button {
+      padding: 12px 28px;
+      background: linear-gradient(to right, #43a047, #66bb6a);
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .advisor-container button:hover {
+      background: linear-gradient(to right, #388e3c, #4caf50);
+      transform: scale(1.05);
+      box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+    }
+
+    .output-box {
+      margin-top: 20px;
+      font-size: 1rem;
+      color: #2e7d32;
+      background: #f1f8e9;
+      border-left: 4px solid #81c784;
+      padding: 15px;
+      border-radius: 8px;
+      display: none;
+      min-height: 50px;
+      text-align: left;
+      white-space: pre-wrap;
+    }
+
+    .ai-icon {
+      margin: 20px auto;
+      animation: pulse 2s infinite;
+      display: block;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.1); opacity: 1; }
+    }
+
+    .faq-item {
+      margin-bottom: 15px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f1f8e9;
+      border-left: 4px solid #66bb6a;
+    }
+
+    .faq-question {
+      background-color: #dcedc8;
+      padding: 15px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s ease;
+    }
+
+    .faq-question:hover {
+      background-color: #c5e1a5;
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease;
+      background-color: #f9fbe7;
+      padding: 0 15px;
+    }
+
+    .faq-answer.open {
+      padding: 15px;
+      max-height: 500px;
+    }
+
+    .section-title {
+      font-size: 1.6rem;
+      margin-bottom: 20px;
+      color: #2e7d32;
+      text-align: center;
+      border-bottom: 2px solid #a5d6a7;
+      padding-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🤖 Cloud Fuze AI Migration Advisor</h2>
+
+  <div class="advisor-container">
+    <svg class="ai-icon" width="60" height="60" viewBox="0 0 24 24" fill="#66bb6a">
+      <path d="M12 2C8.134 2 5 5.134 5 9v2c0 1.03.206 2.01.577 2.909C4.063 14.513 3 15.9 3 17.5c0 2.21 1.79 4 4 4h10c2.21 0 4-1.79 4-4 0-1.6-1.063-2.987-2.577-3.591A7.953 7.953 0 0 0 19 11V9c0-3.866-3.134-7-7-7zm0 2c2.76 0 5 2.24 5 5v2c0 2.76-2.24 5-5 5s-5-2.24-5-5V9c0-2.76 2.24-5 5-5z"/>
+    </svg>
+
+    <label for="goal"><strong>Describe your migration goal:</strong></label>
+    <textarea id="goal" rows="4" placeholder="e.g., Migrate from on-premise server to AWS with minimal downtime..."></textarea>
+
+    <button onclick="getAdvice()">Get Advice</button>
+
+    <div class="output-box" id="aiOutput"></div>
+  </div>
+
+  <div class="support-container">
+    <div class="section-title">📘 Support & FAQs</div>
+
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleAnswer(0)">
+        1. What is cloud migration?
+      </div>
+      <div class="faq-answer" id="answer0">
+        Cloud migration is the process of moving digital assets—like data, apps, and workloads—from on-premise infrastructure to cloud platforms like AWS, Azure, or Google Cloud.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleAnswer(1)">
+        2. How do I ensure minimal downtime during migration?
+      </div>
+      <div class="faq-answer" id="answer1">
+        Plan for incremental migration, use load balancing and staging environments, and conduct thorough pre-migration testing. Real-time sync tools also help reduce downtime.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleAnswer(2)">
+        3. Which AWS service is best for migration?
+      </div>
+      <div class="faq-answer" id="answer2">
+        AWS Application Migration Service is recommended for lift-and-shift migrations. AWS DMS is useful for database transfers, and AWS Snowball is ideal for large-scale offline data transfers.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleAnswer(3)">
+        4. What are key challenges in data migration?
+      </div>
+      <div class="faq-answer" id="answer3">
+        Key challenges include data loss, format mismatches, downtime, compatibility issues, and insufficient validation or rollback strategies.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleAnswer(4)">
+        5. How do I monitor performance post-migration?
+      </div>
+      <div class="faq-answer" id="answer4">
+        Use tools like AWS CloudWatch, Azure Monitor, or Datadog to track metrics such as CPU usage, network I/O, and error rates. Regular audits ensure everything runs as expected.
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function getAdvice() {
+      const goal = document.getElementById("goal").value.trim();
+      const output = document.getElementById("aiOutput");
+
+      if (!goal) {
+        output.style.display = "block";
+        output.style.color = "#c62828";
+        output.textContent = "⚠️ Please describe your migration goal.";
+        return;
+      }
+
+      const message = `💡 AI Advice: Based on your goal, we recommend the following steps:
+
+1️⃣ Break down migration into manageable phases.
+2️⃣ Set up a secure staging environment.
+3️⃣ Use tools like AWS Application Migration Service.
+4️⃣ Enable real-time backups and alerts.
+5️⃣ Monitor performance with AWS CloudWatch or Azure Monitor.
+
+Stay agile, test thoroughly, and ensure rollback plans are ready! ✅`;
+
+      let index = 0;
+      output.style.display = "block";
+      output.style.color = "#2e7d32";
+      output.textContent = "";
+
+      const typeEffect = () => {
+        if (index < message.length) {
+          output.textContent += message.charAt(index++);
+          setTimeout(typeEffect, 20);
+        }
+      };
+      typeEffect();
+    }
+
+    function toggleAnswer(index) {
+      const answer = document.getElementById(`answer${index}`);
+      answer.classList.toggle('open');
+    }
+  </script>
+
+</body>
+</html>

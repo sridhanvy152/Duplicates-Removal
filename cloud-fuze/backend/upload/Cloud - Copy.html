@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cloud Migration UI</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom right, #e0f7fa, #e1f5fe);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 40px;
+      height: 100vh;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin: 5px;
+    }
+
+    label {
+      font-size: 1rem;
+      color: #0277bd;
+      margin-top: 8px;
+    }
+
+    button {
+      padding: 12px 24px;
+      background-color: #0288d1;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin: 12px;
+    }
+
+    button:hover {
+      background-color: #0277bd;
+    }
+
+    .container {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      width: 90%;
+      max-width: 1200px;
+      margin-top: 30px;
+    }
+
+    .cloud {
+      width: 250px;
+      text-align: center;
+      position: relative;
+    }
+
+    .cloud svg {
+      width: 100%;
+      height: auto;
+    }
+
+    .label {
+      margin-top: 10px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #0277bd;
+    }
+
+    .arrow {
+      flex: 1;
+      text-align: center;
+      position: relative;
+    }
+
+    .arrow svg {
+      width: 120px;
+      animation: arrowSlide 2s infinite;
+    }
+
+    @keyframes arrowSlide {
+      0% { transform: translateX(-5px); opacity: 0.5; }
+      50% { transform: translateX(5px); opacity: 1; }
+      100% { transform: translateX(-5px); opacity: 0.5; }
+    }
+
+    .secure-msg {
+      color: #d32f2f;
+      font-size: 1rem;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .file {
+      position: absolute;
+      top: 50%;
+      left: 0%;
+      transform: translateY(-50%);
+      animation: moveFile 2s infinite ease-in-out;
+    }
+
+    @keyframes moveFile {
+      0% { left: 0%; opacity: 0; }
+      50% { left: 50%; opacity: 1; }
+      100% { left: 100%; opacity: 0; }
+    }
+
+    #status {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      color: #00695c;
+    }
+
+    #abortBtn {
+      display: none;
+      background-color: #c62828;
+    }
+
+    #abortBtn:hover {
+      background-color: #b71c1c;
+    }
+
+    .form-section {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .form-section input[type="checkbox"] {
+      transform: scale(1.2);
+      margin-left: 10px;
+    }
+
+    /* Modal Styling */
+    #subscriptionModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #subscriptionModal .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 400px;
+    }
+
+    #subscriptionModal select {
+      padding: 10px;
+      font-size: 1rem;
+      margin: 20px 0;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Cloud Fuze</h2>
+
+<!-- Input Fields -->
+<div class="form-section">
+  <input type="text" id="sourceInput" placeholder="Enter Source Cloud" />
+  <input type="text" id="destinationInput" placeholder="Enter Destination Cloud" />
+  <label>
+    <input type="checkbox" id="secureCheckbox" onchange="handleSecureCheckbox()" /> Secure Migration
+  </label><br/>
+  <button id="migrateBtn" onclick="startMigration()">Migrate</button>
+  <button id="abortBtn" onclick="abortMigration()">Abort</button>
+</div>
+
+<!-- Subscription Modal -->
+<div id="subscriptionModal">
+  <div class="modal-content">
+    <h3>Select Subscription Plan</h3>
+    <select id="subscriptionPlan">
+      <option value="">-- Choose a plan --</option>
+      <option value="basic">Basic - ₹199/month</option>
+      <option value="pro">Pro - ₹499/month</option>
+      <option value="enterprise">Enterprise - ₹999/month</option>
+    </select><br/>
+    <button onclick="confirmSubscription()">Confirm</button>
+    <button onclick="cancelSubscription()" style="background-color:#c62828; margin-left:10px;">Cancel</button>
+  </div>
+</div>
+
+<!-- Cloud Migration Display -->
+<div class="container" id="migrationUI">
+  <div class="cloud">
+    <svg viewBox="0 0 64 64" fill="#90caf9">
+      <circle cx="32" cy="32" r="30" />
+    </svg>
+    <div class="label" id="sourceLabel">Source Cloud</div>
+  </div>
+
+  <div class="arrow">
+    <svg viewBox="0 0 64 64" fill="#42a5f5">
+      <polygon points="10,25 40,25 40,10 60,32 40,54 40,39 10,39"/>
+    </svg>
+    <div class="file" id="fileIcon">
+      <svg width="30" height="30" fill="#1976d2" viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.103.897 2 2 2h12a2 2 0 0 0 2-2V8zm1 7h-4v4h4v2h-6v-6h6z"/>
+      </svg>
+    </div>
+    <div id="secureMsg" class="secure-msg"></div>
+  </div>
+
+  <div class="cloud">
+    <svg viewBox="0 0 64 64" fill="#81d4fa">
+      <circle cx="32" cy="32" r="30" />
+    </svg>
+    <div class="label" id="destinationLabel">Destination Cloud</div>
+  </div>
+</div>
+
+<!-- Status Message -->
+<div id="status"></div>
+
+<!-- JavaScript -->
+<script>
+  let migrationTimeout;
+  let secureConfirmed = false;
+
+  function handleSecureCheckbox() {
+    const checkbox = document.getElementById("secureCheckbox");
+    if (checkbox.checked && !secureConfirmed) {
+      document.getElementById("subscriptionModal").style.display = "flex";
+    }
+  }
+
+  function confirmSubscription() {
+    const plan = document.getElementById("subscriptionPlan").value;
+    if (!plan) {
+      alert("Please select a subscription plan.");
+      return;
+    }
+    secureConfirmed = true;
+    document.getElementById("subscriptionModal").style.display = "none";
+  }
+
+  function cancelSubscription() {
+    document.getElementById("secureCheckbox").checked = false;
+    document.getElementById("subscriptionModal").style.display = "none";
+    secureConfirmed = false;
+  }
+
+  function startMigration() {
+    const sourceName = document.getElementById("sourceInput").value.trim() || "Source Cloud";
+    const destName = document.getElementById("destinationInput").value.trim() || "Destination Cloud";
+    const isSecure = document.getElementById("secureCheckbox").checked;
+
+    if (isSecure && !secureConfirmed) {
+      document.getElementById("subscriptionModal").style.display = "flex";
+      return;
+    }
+
+    document.getElementById("sourceLabel").textContent = sourceName + " "+"Cloud";
+    document.getElementById("destinationLabel").textContent = destName + " "+"Cloud";
+    document.getElementById("secureMsg").textContent = isSecure ? "🔐 Migrating securely..." : "";
+
+    document.getElementById("migrationUI").style.display = "flex";
+    document.getElementById("migrateBtn").style.display = "none";
+    document.getElementById("abortBtn").style.display = "inline-block";
+    document.getElementById("status").textContent = "Migration in progress...";
+    document.getElementById("fileIcon").style.display = "block";
+
+    migrationTimeout = setTimeout(() => {
+      document.getElementById("status").textContent = "✅ Migration Complete!";
+      document.getElementById("abortBtn").style.display = "none";
+      document.getElementById("fileIcon").style.display = "none";
+      document.getElementById("secureMsg").textContent = "";
+    }, 10000);
+  }
+
+  function abortMigration() {
+    clearTimeout(migrationTimeout);
+    document.getElementById("status").textContent = "❌ Migration Aborted.";
+    document.getElementById("abortBtn").style.display = "none";
+    document.getElementById("fileIcon").style.display = "none";
+    document.getElementById("secureMsg").textContent = "";
+  }
+</script>
+
+</body>
+</html>
