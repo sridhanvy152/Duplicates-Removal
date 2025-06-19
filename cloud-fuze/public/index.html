@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cloud Fuze Duplicate Finder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #e0f2f1, #f1f8e9, #ffffff);
+      background-size: 400% 400%;
+      animation: gradient 12s ease infinite;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 30px;
+    }
+
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      background: white;
+      padding: 50px 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      max-width: 750px;
+      width: 100%;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    h1 {
+      color: #2e7d32;
+      margin-bottom: 10px;
+      font-size: 2rem;
+    }
+
+    p {
+      color: #555;
+      margin-bottom: 30px;
+      font-size: 1rem;
+    }
+
+    input[type="file"] {
+      margin-top: 10px;
+      font-size: 1rem;
+    }
+
+    .btn {
+      margin-top: 25px;
+      padding: 12px 32px;
+      background: linear-gradient(to right, #43a047, #66bb6a);
+      color: white;
+      font-weight: 600;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 1rem;
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+      transition: transform 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+    }
+
+    .loader {
+      margin: 20px 0;
+      font-weight: 500;
+      color: #888;
+    }
+
+    .results {
+      margin-top: 30px;
+      text-align: left;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 0 10px;
+    }
+
+    .duplicate {
+      background: #fff0f0;
+      color: #b71c1c;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      border-radius: 10px;
+      border-left: 5px solid #e53935;
+      font-size: 0.95rem;
+    }
+
+    .success {
+      color: #2e7d32;
+      font-weight: 600;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .delete-btn {
+      background: linear-gradient(to right, #ef5350, #e53935);
+      margin-top: 20px;
+    }
+
+    .delete-btn:hover {
+      background: linear-gradient(to right, #e53935, #c62828);
+    }
+
+    .icon {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      color: #66bb6a;
+    }
+
+    .footer-note {
+      margin-top: 30px;
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="icon">🗂️</div>
+    <h1>Cloud Fuze Duplicate Finder</h1>
+    <p>Select a folder to scan and remove duplicate files easily.</p>
+
+    <input type="file" id="fileInput" multiple webkitdirectory />
+    <br />
+    <button class="btn" onclick="uploadFiles()">🔍 Scan Duplicates</button>
+    
+    <div id="loader" class="loader"></div>
+    <div class="results" id="result"></div>
+
+    <div class="footer-note">Your data is processed locally and safely</div>
+  </div>
+
+  <script>
+    let duplicatesList = [];
+
+    async function uploadFiles() {
+      const input = document.getElementById('fileInput');
+      const files = input.files;
+      const result = document.getElementById('result');
+      const loader = document.getElementById('loader');
+
+      result.innerHTML = '';
+      loader.textContent = '⏳ Scanning for duplicates...';
+      duplicatesList = [];
+
+      if (files.length === 0) {
+        loader.textContent = '';
+        alert("Please select a folder.");
+        return;
+      }
+
+      const formData = new FormData();
+      for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i], files[i].webkitRelativePath);
+      }
+
+      try {
+        const res = await fetch('http://localhost:5000/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        loader.textContent = '';
+
+        if (data.duplicates.length > 0) {
+          duplicatesList = data.duplicates.map(d => d.duplicatePath);
+          result.innerHTML = `<h3>🛑 Duplicates Found:</h3>`;
+          data.duplicates.forEach(d => {
+            result.innerHTML += `
+              <div class="duplicate">
+                <strong>${d.duplicatePath}</strong><br/>
+                ↪ same as <strong>${d.originalPath}</strong>
+              </div>`;
+          });
+
+          result.innerHTML += `
+            <button class="btn delete-btn" onclick="deleteDuplicates()">🗑 Delete Duplicates</button>
+          `;
+        } else {
+          result.innerHTML = `<p class="success">🎉 No duplicates found!</p>`;
+        }
+      } catch (err) {
+        loader.textContent = '';
+        alert("❌ Error scanning files. Make sure the backend is running.");
+        console.error(err);
+      }
+    }
+
+    async function deleteDuplicates() {
+      if (duplicatesList.length === 0) return;
+
+      const confirmed = confirm("Are you sure you want to delete all duplicates?");
+      if (!confirmed) return;
+
+      const res = await fetch('http://localhost:5000/delete-duplicates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: duplicatesList })
+      });
+
+      const data = await res.json();
+      alert(`🗑 ${data.deleted.length} duplicates deleted.`);
+
+      document.getElementById('result').innerHTML = `
+        <p class="success">✅ ${data.deleted.length} duplicates deleted.<br/>
+        Remaining files stored in <code>/stored/</code> folder.</p>
+      `;
+    }
+  </script>
+
+</body>
+</html>
